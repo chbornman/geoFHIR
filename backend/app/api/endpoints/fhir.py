@@ -28,11 +28,12 @@ def get_db():
 async def import_fhir_file(file: UploadFile = File(...)):
     """
     Import FHIR resources from an uploaded file
-    
-    Accepts a JSON file containing:
+
+    Accepts a JSON or NDJSON (.ndjson) file containing:
     - Single FHIR resource
     - Array of FHIR resources
     - FHIR Bundle
+    - Newline-delimited JSON (NDJSON) of FHIR resources
     """
     # Create uploads directory if it doesn't exist
     upload_dir = os.path.join(os.getcwd(), "uploads")

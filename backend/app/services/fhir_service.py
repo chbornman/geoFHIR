@@ -59,8 +59,24 @@ class FHIRService:
     def import_fhir_file(self, file_path: str, resource_type: str = None):
         """Import FHIR resources from a JSON file"""
         try:
+            # Open and parse file: support JSON and NDJSON formats
             with open(file_path, 'r') as f:
-                data = json.load(f)
+                # If file is newline-delimited JSON (.ndjson), parse line by line
+                if file_path.lower().endswith('.ndjson'):
+                    data: List[Any] = []
+                    for line in f:
+                        line = line.strip()
+                        if not line:
+                            continue
+                        try:
+                            data.append(json.loads(line))
+                        except json.JSONDecodeError as e:
+                            return {
+                                "status": "error",
+                                "message": f"Failed to parse NDJSON line: {e}"
+                            }
+                else:
+                    data = json.load(f)
                 
             if isinstance(data, dict):
                 # Single resource
