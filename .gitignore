@@ -1,5 +1,10 @@
 # Environment variables
 .env
+.env.*
+!.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
 
 # Python
 __pycache__/
@@ -13,3 +18,4 @@ node_modules/
 
 # Sample data
 sample_data/
+!sample_data/README.md
