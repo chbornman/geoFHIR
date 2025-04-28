@@ -13,7 +13,10 @@ Healthcare providers often have valuable data showing patterns of disease but la
 
 ## Features
 
-- FHIR data ingestion and processing
+- FHIR data ingestion and processing:
+  - Upload FHIR JSON files directly (Patient, Observation, Location resources)
+  - Support for single resources, resource arrays, and FHIR Bundles
+  - Optional connection to external FHIR servers (disabled by default)
 - Geographic data integration (pipelines, infrastructure, etc.)
 - Interactive mapping visualization
 - Correlation analysis between health data and geographic features
@@ -83,13 +86,42 @@ GeoFHIR/
 
 ### Setup
 
+#### Using Docker (Recommended)
+
 1. Clone the repository
-2. Copy `.env.example` to `.env` and fill in your configuration
-3. Run `docker-compose up` to start all services
+2. Copy `.env.example` to `.env` and fill in your configuration, including your Google Maps API key
+3. Run `docker compose up -d` to start all services
+   - This will automatically use variables from the top-level `.env` file
 4. Access the frontend at http://localhost:3000
 5. Access the API at http://localhost:8000
 
-*More detailed setup instructions coming soon*
+#### Local Development (Backend)
+
+1. Clone the repository
+2. Create and activate a Python virtual environment:
+   ```bash
+   cd geoFHIR
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+4. Start a PostgreSQL database (with PostGIS) using Docker:
+   ```bash
+   docker-compose up db
+   ```
+   Or configure your `.env` file to point to an existing PostgreSQL instance
+5. Run the FastAPI server in development mode:
+   ```bash
+   cd backend
+   uvicorn app.main:app --reload
+   ```
+6. Access the API at http://localhost:8000
+7. Visit http://localhost:8000/docs for interactive API documentation
+
+**Note:** When the FastAPI server is running with `--reload`, code changes will automatically restart the server.
 
 ## Architecture Overview
 

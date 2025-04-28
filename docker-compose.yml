@@ -1,18 +1,24 @@
-version: '3.8'
+name: geofhir
 
 services:
   api:
-    build: ./backend
+    container_name: geofhir_api
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    volumes:
-      - ./backend:/app
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/geofhir
+      - USE_EXTERNAL_FHIR_SERVER=${USE_EXTERNAL_FHIR_SERVER}
     depends_on:
       - db
+    restart: unless-stopped
 
   db:
+    container_name: geofhir_db
     image: postgis/postgis:14-3.3
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -22,15 +28,26 @@ services:
       - POSTGRES_DB=geofhir
     ports:
       - "5432:5432"
+    restart: unless-stopped
 
   frontend:
-    build: ./frontend
+    container_name: geofhir_frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
       - ./frontend:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    environment:
+      - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+      - NEXT_PUBLIC_API_URL=http://api:8000
     depends_on:
       - api
+    restart: unless-stopped
 
 volumes:
   postgres_data:

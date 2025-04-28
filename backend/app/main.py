@@ -1,5 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
+
+from app.api.endpoints import fhir
+from app.core.config import settings
 
 app = FastAPI(
     title="GeoFHIR API",
@@ -16,12 +21,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Create uploads directory if it doesn't exist
+uploads_dir = os.path.join(os.getcwd(), "uploads")
+os.makedirs(uploads_dir, exist_ok=True)
+
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to GeoFHIR API"}
+    return {
+        "message": "Welcome to GeoFHIR API",
+        "docs_url": "/docs",
+        "redoc_url": "/redoc"
+    }
 
 # Include routers
-# from app.api.endpoints import fhir, geo, analysis
+app.include_router(fhir.router)
 
 if __name__ == "__main__":
     import uvicorn
