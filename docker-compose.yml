@@ -1,4 +1,9 @@
 name: geofhir
+# Define an explicit network with a simpler setup
+networks:
+  geofhir_network:
+    name: geofhir_network
+    driver: bridge
 
 services:
   api:
@@ -15,6 +20,8 @@ services:
       - USE_EXTERNAL_FHIR_SERVER=${USE_EXTERNAL_FHIR_SERVER}
     depends_on:
       - db
+    networks:
+      - geofhir_network
     restart: unless-stopped
 
   db:
@@ -28,6 +35,8 @@ services:
       - POSTGRES_DB=geofhir
     ports:
       - "5432:5432"
+    networks:
+      - geofhir_network
     restart: unless-stopped
 
   frontend:
@@ -44,9 +53,14 @@ services:
       - .env
     environment:
       - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+      # Using Docker service name 'api' to connect to the backend within the network
       - NEXT_PUBLIC_API_URL=http://api:8000
+      # Permit API server-side to client-side communication
+      - NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
     depends_on:
       - api
+    networks:
+      - geofhir_network
     restart: unless-stopped
 
 volumes:

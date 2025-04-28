@@ -3,6 +3,7 @@ import Head from 'next/head';
 import MapViewer from '../components/maps/MapViewer';
 import PatientList, { FHIRPatient } from '../components/fhir/PatientList';
 import FileUpload from '../components/fhir/FileUpload';
+import SimpleConnectionStatus from '../components/SimpleConnectionStatus';
 import { fetchPatients } from '../services/api';
 import { Disclosure, Transition } from '@headlessui/react';
 import { 
@@ -137,24 +138,16 @@ export default function Home() {
         setMarkers(newMarkers);
         
         showNotification('success', `Loaded ${patientsData.length} patients with ${newMarkers.length} mappable locations`);
-      } else {
-        // If no patients from API, load the sample data
-        loadSampleData();
       }
     } catch (err) {
       console.error('Error refreshing data:', err);
-      setError('Failed to refresh data. Using sample data instead.');
-      // Load sample data as fallback
-      loadSampleData();
+      setError('Failed to refresh data. Please upload a FHIR data file.');
     } finally {
       setLoading(false);
     }
   };
   
-  // Load data from API when component mounts
-  useEffect(() => {
-    refreshData();
-  }, []);
+  // Don't automatically load data on mount - let user upload a file first
 
   // Handle patient selection
   const handlePatientSelect = (patient: FHIRPatient) => {
@@ -236,6 +229,7 @@ export default function Home() {
               <p className="mt-1 text-sm text-gray-500">
                 Analyze geographic patterns in healthcare data using FHIR standards
               </p>
+              <SimpleConnectionStatus />
             </div>
             
             <div>
@@ -274,7 +268,7 @@ export default function Home() {
           
           {/* File Upload Panel */}
           <div className="mb-6">
-            <Disclosure>
+            <Disclosure defaultOpen={true}>
               {({ open }) => (
                 <>
                   <Disclosure.Button className="flex w-full justify-between rounded-lg bg-primary-50 px-4 py-3 text-left text-sm font-medium text-primary-900 hover:bg-primary-100 focus:outline-none focus-visible:ring focus-visible:ring-primary-500">
@@ -304,50 +298,60 @@ export default function Home() {
             </Disclosure>
           </div>
           
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="w-full lg:w-1/3">
-              <PatientList 
-                patients={patients} 
-                onPatientSelect={handlePatientSelect}
-                selectedPatientId={selectedPatient?.id}
-              />
+          {patients.length === 0 ? (
+            <div className="text-center py-8 bg-white shadow-sm rounded-lg">
+              <DocumentArrowUpIcon className="h-12 w-12 text-primary-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900">No patient data available</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Please use the "Upload FHIR Data" panel above to load patient data.
+              </p>
             </div>
-            
-            <div className="w-full lg:w-2/3">
-              <div className="mb-3">
-                <h2 className="text-xl font-bold text-gray-900">Kansas Patient Map</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  This map shows patient locations across Kansas. Click on a patient in the list to center the map.
-                </p>
+          ) : (
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="w-full lg:w-1/3">
+                <PatientList 
+                  patients={patients} 
+                  onPatientSelect={handlePatientSelect}
+                  selectedPatientId={selectedPatient?.id}
+                />
               </div>
               
-              <MapViewer 
-                markers={markers} 
-                center={selectedPatient ? getPatientCoordinates(selectedPatient) || undefined : undefined}
-              />
-              
-              {selectedPatient && (
-                <div className="mt-4 bg-white shadow rounded-lg p-4">
-                  <h3 className="text-lg font-medium text-gray-900">Selected Patient:</h3>
-                  <p className="text-sm text-gray-600">{getPatientName(selectedPatient)}</p>
-                  <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="font-medium">Gender:</span> {selectedPatient.gender || 'Unknown'}
-                    </div>
-                    <div>
-                      <span className="font-medium">Birth Date:</span> {selectedPatient.birthDate || 'Unknown'}
-                    </div>
-                    <div className="col-span-2">
-                      <span className="font-medium">Address:</span> {selectedPatient.address && selectedPatient.address[0]?.line?.[0]}, 
-                      {selectedPatient.address && selectedPatient.address[0]?.city}, 
-                      {selectedPatient.address && selectedPatient.address[0]?.state} 
-                      {selectedPatient.address && selectedPatient.address[0]?.postalCode}
+              <div className="w-full lg:w-2/3">
+                <div className="mb-3">
+                  <h2 className="text-xl font-bold text-gray-900">Kansas Patient Map</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    This map shows patient locations across Kansas. Click on a patient in the list to center the map.
+                  </p>
+                </div>
+                
+                <MapViewer 
+                  markers={markers} 
+                  center={selectedPatient ? getPatientCoordinates(selectedPatient) || undefined : undefined}
+                />
+                
+                {selectedPatient && (
+                  <div className="mt-4 bg-white shadow rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-gray-900">Selected Patient:</h3>
+                    <p className="text-sm text-gray-600">{getPatientName(selectedPatient)}</p>
+                    <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="font-medium">Gender:</span> {selectedPatient.gender || 'Unknown'}
+                      </div>
+                      <div>
+                        <span className="font-medium">Birth Date:</span> {selectedPatient.birthDate || 'Unknown'}
+                      </div>
+                      <div className="col-span-2">
+                        <span className="font-medium">Address:</span> {selectedPatient.address && selectedPatient.address[0]?.line?.[0]}, 
+                        {selectedPatient.address && selectedPatient.address[0]?.city}, 
+                        {selectedPatient.address && selectedPatient.address[0]?.state} 
+                        {selectedPatient.address && selectedPatient.address[0]?.postalCode}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </main>
       

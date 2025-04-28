@@ -3,6 +3,7 @@ import shutil
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from typing import Optional, List
+import time
 
 from app.db.base import SessionLocal
 from app.services.fhir_service import FHIRService
@@ -67,3 +68,15 @@ def get_locations():
     """Get all location data"""
     locations = fhir_service.get_locations()
     return {"locations": locations, "count": len(locations)}
+
+@router.get("/health")
+def health_check():
+    """
+    Health check endpoint to verify API availability
+    Returns timestamp and status information
+    """
+    return {
+        "status": "healthy",
+        "timestamp": time.time(),
+        "service": "geoFHIR API"
+    }
