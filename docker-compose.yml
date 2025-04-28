@@ -8,7 +8,7 @@ networks:
 services:
   api:
     container_name: geofhir_api
-    build: 
+    build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
@@ -26,7 +26,7 @@ services:
 
   db:
     container_name: geofhir_db
-    image: postgis/postgis:14-3.3
+    image: postgis/postgis:latest
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
@@ -54,7 +54,7 @@ services:
     environment:
       - NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
       # Using Docker service name 'api' to connect to the backend within the network
-      - NEXT_PUBLIC_API_URL=http://api:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
       # Permit API server-side to client-side communication
       - NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
     depends_on:
