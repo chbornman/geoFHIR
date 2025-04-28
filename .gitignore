@@ -1,0 +1,15 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+
+# Node.js
+node_modules/
+.next/
+
+# Sample data
+sample_data/
