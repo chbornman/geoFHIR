@@ -102,7 +102,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
     }
   };
 
-  // Handle GEO upload (placeholder for now)
+  // Handle GEO upload
   const handleGeoUpload = async () => {
     if (geoFiles.length === 0) {
       setError("Please select one or more geographic files first");
@@ -112,10 +112,31 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
     setUploadType('geo');
     setError(null);
     setSuccess(null);
+    
     try {
-      // TODO: Implement actual geo data upload
-      // Simulating upload for now
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Import from api.ts
+      const { uploadGeoJSONFile } = await import("../../services/api");
+      
+      for (const file of geoFiles) {
+        // Generate a dataset name if user doesn't provide one
+        const datasetName = file.name.replace(/\.(json|geojson)$/, "");
+        
+        // Upload the GeoJSON file
+        const result = await uploadGeoJSONFile(
+          file,
+          datasetName,
+          `Uploaded via GeoFHIR interface on ${new Date().toLocaleString()}`
+        );
+        
+        if (result.status !== "success") {
+          setError(
+            `Error uploading ${file.name}: ${result.message || "Upload failed"}`
+          );
+          setIsUploading(false);
+          setUploadType(null);
+          return;
+        }
+      }
       
       setSuccess(`Uploaded ${geoFiles.length} geographic file(s) successfully`);
       // Notify parent to refresh data and close panel

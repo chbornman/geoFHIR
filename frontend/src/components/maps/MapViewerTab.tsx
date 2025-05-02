@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import MapViewer from "./MapViewer";
 import PatientList, { FHIRPatient } from "../fhir/PatientList";
-import { ExclamationTriangleIcon, DocumentArrowUpIcon } from "@heroicons/react/24/outline";
+import {
+  ExclamationTriangleIcon,
+  DocumentArrowUpIcon,
+} from "@heroicons/react/24/outline";
 import { fetchPatientObservations } from "../../services/api";
 
 interface MapViewerTabProps {
@@ -15,9 +18,11 @@ const MapViewerTab: React.FC<MapViewerTabProps> = ({
   patients,
   markers,
   loading,
-  error
+  error,
 }) => {
-  const [selectedPatient, setSelectedPatient] = useState<FHIRPatient | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<FHIRPatient | null>(
+    null,
+  );
   const [observations, setObservations] = useState<any[]>([]);
   const [obsLoading, setObsLoading] = useState(false);
 
@@ -209,9 +214,7 @@ const MapViewerTab: React.FC<MapViewerTabProps> = ({
                             </div>
                             <div className="text-gray-500">
                               {effectiveDate
-                                ? new Date(
-                                    effectiveDate,
-                                  ).toLocaleDateString()
+                                ? new Date(effectiveDate).toLocaleDateString()
                                 : ""}
                             </div>
                           </li>

@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from typing import Generator, Optional
 
 from app.core.config import settings
 
@@ -26,5 +27,19 @@ else:
         return DummySession()
     
     SessionLocal = get_dummy_session
+
+# Dependency to get DB session
+def get_db() -> Generator:
+    db = None
+    try:
+        if settings.DATABASE_URL:
+            db = SessionLocal()
+            yield db
+        else:
+            # Return None if there's no database connection
+            yield None
+    finally:
+        if db:
+            db.close()
 
 Base = declarative_base()

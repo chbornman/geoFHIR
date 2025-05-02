@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   MapIcon,
@@ -7,8 +7,10 @@ import {
   ChartBarIcon,
   UserGroupIcon,
   ArrowTrendingUpIcon,
+  ServerIcon,
+  CircleStackIcon,
 } from "@heroicons/react/24/outline";
-import ConnectionStatus from "../ConnectionStatus";
+import { getCurrentSettings } from "../../services/api";
 
 interface DashboardTabProps {
   patientsCount: number;
@@ -19,16 +21,31 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
   patientsCount,
   locationsCount,
 }) => {
+  // State for storing FHIR server settings
+  const [useExternalFHIR, setUseExternalFHIR] = useState(false);
+  const [fhirServerURL, setFhirServerURL] = useState<string | null>(null);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  
+  // Load settings on component mount
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const settings = await getCurrentSettings().catch(() => null);
+        if (settings && settings.fhir) {
+          setUseExternalFHIR(settings.fhir.use_external || false);
+          setFhirServerURL(settings.fhir.server_url || null);
+        }
+      } catch (error) {
+        console.error("Error loading settings:", error);
+      } finally {
+        setSettingsLoaded(true);
+      }
+    };
+    
+    loadSettings();
+  }, []);
   // Navigation card links
   const navigationCards = [
-    {
-      title: "Map Viewer",
-      description: "Visualize patient data on interactive maps",
-      icon: <MapIcon className="h-8 w-8 text-indigo-500" />,
-      href: "/map-viewer",
-      color: "bg-indigo-50 border-indigo-200 hover:bg-indigo-100",
-      stats: `${locationsCount} locations`,
-    },
     {
       title: "File Upload",
       description: "Import FHIR data and geographic information",
@@ -36,6 +53,14 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
       href: "/file-upload",
       color: "bg-green-50 border-green-200 hover:bg-green-100",
       stats: `${patientsCount} patients`,
+    },
+    {
+      title: "Map Viewer",
+      description: "Visualize patient data on interactive maps",
+      icon: <MapIcon className="h-8 w-8 text-indigo-500" />,
+      href: "/map-viewer",
+      color: "bg-indigo-50 border-indigo-200 hover:bg-indigo-100",
+      stats: `${locationsCount} locations`,
     },
     {
       title: "Analytics",
@@ -87,8 +112,23 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
               Analyze geographic patterns in healthcare data using FHIR standards
             </p>
           </div>
-          <div className="mt-4 sm:mt-0">
-            <ConnectionStatus showLabel={true} />
+          <div className="mt-4 sm:mt-0 flex items-center px-3 py-2 rounded-full border border-gray-200 bg-gray-50">
+            {useExternalFHIR ? (
+              <>
+                <ServerIcon className="h-5 w-5 text-blue-500 mr-2" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-gray-900">External FHIR Server</span>
+                  {fhirServerURL && (
+                    <span className="text-xs text-gray-500">{fhirServerURL}</span>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <CircleStackIcon className="h-5 w-5 text-green-500 mr-2" />
+                <span className="text-sm font-medium text-gray-900">Local Database</span>
+              </>
+            )}
           </div>
         </div>
         
@@ -155,6 +195,42 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                           ? `${Math.round((locationsCount / patientsCount) * 100)}%`
                           : "0%"}
                       </div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Data Source Card */}
+          <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-200">
+            <div className="p-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  {useExternalFHIR ? 
+                    <ServerIcon className="h-6 w-6 text-blue-600" /> : 
+                    <CircleStackIcon className="h-6 w-6 text-green-600" />
+                  }
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">
+                      Data Source
+                    </dt>
+                    <dd className="mt-1">
+                      <div className="text-sm text-gray-900 font-medium">
+                        {useExternalFHIR ? "External FHIR Server" : "Local Database"}
+                      </div>
+                      {fhirServerURL && useExternalFHIR && (
+                        <div className="text-xs text-gray-500 truncate mt-1">
+                          {fhirServerURL}
+                        </div>
+                      )}
+                      {!useExternalFHIR && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          Local PostgreSQL/PostGIS database
+                        </div>
+                      )}
                     </dd>
                   </dl>
                 </div>

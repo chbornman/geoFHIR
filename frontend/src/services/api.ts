@@ -58,6 +58,164 @@ export const fetchLocations = async () => {
   }
 };
 
+// GeoJSON API endpoints
+export const fetchGeoDatasets = async () => {
+  try {
+    const response = await api.get('/api/v1/geo/datasets');
+    return response.data || { datasets: [], total: 0 };
+  } catch (error) {
+    console.error('Error fetching geo datasets:', error);
+    return { datasets: [], total: 0 };
+  }
+};
+
+export const fetchGeoDatasetDetails = async (datasetId: number) => {
+  try {
+    const response = await api.get(`/api/v1/geo/datasets/${datasetId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching geo dataset ${datasetId}:`, error);
+    throw error;
+  }
+};
+
+export const fetchGeoDatasetGeoJSON = async (datasetId: number) => {
+  try {
+    const response = await api.get(`/api/v1/geo/datasets/${datasetId}/geojson`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching GeoJSON for dataset ${datasetId}:`, error);
+    throw error;
+  }
+};
+
+export const uploadGeoJSONFile = async (file: File, name: string, description?: string) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('name', name);
+    
+    if (description) {
+      formData.append('description', description);
+    }
+    
+    const response = await api.post('/api/v1/geo/import/geojson', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading GeoJSON file:', error);
+    throw error;
+  }
+};
+
+export const analyzeSpatialCorrelation = async (datasetId: number, bufferDistance: number = 1000) => {
+  try {
+    const response = await api.post(`/api/v1/geo/analyze?dataset_id=${datasetId}&buffer_distance=${bufferDistance}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error analyzing spatial correlation:', error);
+    throw error;
+  }
+};
+
+// Settings API endpoints
+export interface DatabaseSettings {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  database: string;
+}
+
+export interface FHIRSettings {
+  server_url?: string;
+  use_external: boolean;
+  username?: string;
+  password?: string;
+}
+
+export interface AppSettings {
+  database: DatabaseSettings;
+  fhir: FHIRSettings;
+  environment?: string;
+}
+
+export const getCurrentSettings = async (): Promise<AppSettings> => {
+  try {
+    const response = await api.get('/api/v1/settings/current');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching current settings:', error);
+    throw error;
+  }
+};
+
+export const testDatabaseConnection = async (settings: DatabaseSettings) => {
+  try {
+    const response = await api.post('/api/v1/settings/database/test', settings);
+    return response.data;
+  } catch (error) {
+    console.error('Error testing database connection:', error);
+    throw error;
+  }
+};
+
+export const testFHIRConnection = async (settings: FHIRSettings) => {
+  try {
+    const response = await api.post('/api/v1/settings/fhir/test', settings);
+    return response.data;
+  } catch (error) {
+    console.error('Error testing FHIR connection:', error);
+    throw error;
+  }
+};
+
+export const getSystemHealth = async () => {
+  try {
+    // Try the settings-specific health endpoint first
+    try {
+      const response = await api.get('/api/v1/settings/health');
+      return response.data;
+    } catch (settingsError) {
+      // Fall back to the root health endpoint if settings endpoint isn't available
+      console.warn('Settings health endpoint not available, using root health endpoint');
+      const rootResponse = await api.get('/health');
+      
+      // Transform the response to match the expected format
+      return {
+        status: rootResponse.data.status === "healthy" ? "healthy" : "degraded",
+        services: {
+          api: {
+            status: "healthy",
+            timestamp: rootResponse.data.timestamp
+          },
+          database: {
+            status: "unknown"
+          },
+          fhir: {
+            status: "unknown"
+          }
+        }
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching system health:', error);
+    // Return a default response instead of throwing to prevent UI errors
+    return {
+      status: "unknown",
+      services: {
+        api: { status: "unknown" },
+        database: { status: "unknown" },
+        fhir: { status: "unknown" }
+      }
+    };
+  }
+};
+
 export const importFHIRData = async (file: File) => {
   try {
     const formData = new FormData();

@@ -2,16 +2,16 @@ import React from "react";
 import Head from "next/head";
 import TopBar from "../components/common/TopBar";
 import NavTabs from "../components/common/NavTabs";
-import FileUpload from "../components/fhir/FileUpload";
+import SettingsTab from "../components/settings/SettingsTab";
 
-export default function FileUploadPage() {
+export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Head>
-        <title>GeoFHIR - File Upload</title>
+        <title>GeoFHIR - Settings</title>
         <meta
           name="description"
-          content="Upload FHIR and geographic data for analysis"
+          content="Configure database and application settings"
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -21,14 +21,7 @@ export default function FileUploadPage() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
-          <div className="mb-6">
-            <FileUpload
-              onUploadSuccess={() => {
-                // Redirect to map viewer page after successful upload
-                window.location.href = "/";
-              }}
-            />
-          </div>
+          <SettingsTab />
         </div>
       </main>
 

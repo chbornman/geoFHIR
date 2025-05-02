@@ -5,14 +5,16 @@ import {
   MapIcon, 
   DocumentArrowUpIcon, 
   CommandLineIcon, 
-  HomeIcon 
+  HomeIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline'
 
 // Navigation tabs for main pages
 const tabs = [
   { name: 'Dashboard', href: '/', icon: <HomeIcon className="h-4 w-4 mr-1" /> },
-  { name: 'Map Viewer', href: '/map-viewer', icon: <MapIcon className="h-4 w-4 mr-1" /> },
   { name: 'File Upload', href: '/file-upload', icon: <DocumentArrowUpIcon className="h-4 w-4 mr-1" /> },
+  { name: 'Map Viewer', href: '/map-viewer', icon: <MapIcon className="h-4 w-4 mr-1" /> },
+  { name: 'Settings', href: '/settings', icon: <Cog6ToothIcon className="h-4 w-4 mr-1" /> },
   { name: 'Debug Env', href: '/debug-env', icon: <CommandLineIcon className="h-4 w-4 mr-1" /> },
 ]
 

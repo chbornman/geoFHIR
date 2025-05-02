@@ -102,62 +102,16 @@ export default function MapViewerPage() {
             `Loaded ${patientsData.length} patients with ${newMarkers.length} mappable locations`,
           );
         } else {
-          // If no patients, load sample data 
-          const response = await fetch("/api/sample-patients");
-          const data = await response.json();
-
-          if (data.patients && data.patients.length > 0) {
-            setPatients(data.patients);
-
-            // Create markers for all patients with coordinates
-            const newMarkers = data.patients
-              .map((patient: FHIRPatient) => {
-                const coords = getPatientCoordinates(patient);
-                if (!coords) return null;
-
-                return {
-                  position: coords,
-                  title: getPatientName(patient),
-                };
-              })
-              .filter(Boolean);
-
-            setMarkers(newMarkers);
-
-            showNotification(
-              "success",
-              `Loaded ${data.patients.length} sample patients with ${newMarkers.length} mappable locations`,
-            );
-          } else {
-            // Fallback to hardcoded patient locations
-            setError("No patient data available. Using fallback location data.");
-            const fallbackMarkers = [
-              { position: { lat: 39.0997, lng: -94.5786 }, title: "Kansas City" },
-              { position: { lat: 37.6872, lng: -97.3301 }, title: "Wichita" },
-              { position: { lat: 39.0558, lng: -95.6894 }, title: "Topeka" },
-              { position: { lat: 38.8402, lng: -97.6114 }, title: "Salina" },
-              { position: { lat: 38.9108, lng: -99.3125 }, title: "Hays" },
-              { position: { lat: 37.0842, lng: -100.8584 }, title: "Liberal" },
-            ];
-
-            setMarkers(fallbackMarkers);
-          }
+          // No data available - don't load any sample data
+          setError("No data in local database");
+          setPatients([]);
+          setMarkers([]);
         }
       } catch (err) {
         console.error("Error loading data:", err);
-        setError("Failed to load patient data. Using fallback location data.");
-
-        // Fallback to hardcoded patient locations
-        const fallbackMarkers = [
-          { position: { lat: 39.0997, lng: -94.5786 }, title: "Kansas City" },
-          { position: { lat: 37.6872, lng: -97.3301 }, title: "Wichita" },
-          { position: { lat: 39.0558, lng: -95.6894 }, title: "Topeka" },
-          { position: { lat: 38.8402, lng: -97.6114 }, title: "Salina" },
-          { position: { lat: 38.9108, lng: -99.3125 }, title: "Hays" },
-          { position: { lat: 37.0842, lng: -100.8584 }, title: "Liberal" },
-        ];
-
-        setMarkers(fallbackMarkers);
+        setError("Failed to connect to database. Please check your connection in Settings.");
+        setPatients([]);
+        setMarkers([]);
       } finally {
         setLoading(false);
       }
