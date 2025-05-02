@@ -67,10 +67,15 @@ const ConnectionStatusIndicator: React.FC<Props> = ({ className = '' }) => {
     };
   }, []);
 
-  // Display API URL in development mode for debugging
-  const apiInfo = process.env.NODE_ENV === 'development' 
-    ? `API: ${window.location.origin}`
-    : '';
+  // Display API URL in development mode for debugging - with SSR safety check
+  const [apiInfo, setApiInfo] = useState('');
+  
+  // Set API info safely in useEffect to avoid SSR issues with window object
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      setApiInfo(`API: ${window.location.origin}`);
+    }
+  }, []);
 
   // Get detailed status message
   const getStatusDetails = () => {

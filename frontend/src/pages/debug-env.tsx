@@ -1,9 +1,12 @@
 import React from 'react';
+import NavTabs from '../components/common/NavTabs';
 
 const DebugEnv: React.FC = () => {
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Environment Debug</h1>
+    <>
+      <NavTabs />
+      <div className="container mx-auto p-4">
+        <h1 className="text-2xl font-bold mb-4">Environment Debug</h1>
       
       <div className="bg-gray-100 p-4 rounded-lg">
         <h2 className="text-xl font-semibold mb-2">Environment Variables</h2>
@@ -42,6 +45,7 @@ const DebugEnv: React.FC = () => {
         </button>
       </div>
     </div>
+    </>
   );
 };
 

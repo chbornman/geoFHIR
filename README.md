@@ -76,6 +76,36 @@ GeoFHIR/
 - **Mapping**: Google Maps API integration
 - **Geospatial Data**: GeoJSON format support
 
+## Implementation Status
+
+### Backend
+- FHIR ingestion & caching: implemented via upload endpoint `/api/v1/fhir/import/file` and in-memory cache.
+- API endpoints for:
+  - Listing patients (`GET /api/v1/fhir/patients`)
+  - Patient observations (`GET /api/v1/fhir/patients/{id}/observations`)
+  - Locations (`GET /api/v1/fhir/locations`)
+  - Health/status endpoints (`/`, `/health`, `/api/v1/status`, `/api/v1/fhir/health`)
+- Persistent database models and migrations: not implemented (uses in-memory or dummy DB).
+- External FHIR server support: stubbed (feature-flagged, untested).
+- Geospatial analysis endpoints: not yet exposed via API.
+
+### Frontend
+- Data ingestion:
+  - FileUpload component for JSON/NDJSON uploads: implemented.
+  - Sample data loader via `/api/sample-patients`: implemented.
+- Data display:
+  - PatientList component: implemented, lists patients and badges, with selection.
+  - MapViewer component: implemented (Google Static Maps API + fallback Embed API).
+- Correlation analysis & reporting UI: stubs present, but no functionality.
+- Connection status indicator: implemented.
+- Role-based access control, reporting/export features: not implemented.
+
+### Other
+- `docs/` directory: empty (no markdown documentation beyond this README).
+- Tests: backend `tests/` folder is empty; no test suite.
+- `.env.example`: referenced but not included (create a `.env` file with required variables).
+- Sample data & utils: sample FHIR NDJSON data under `sample_data`, conversion script in `utils/`.
+
 ## Getting Started
 
 ### Prerequisites
@@ -110,7 +140,7 @@ GeoFHIR/
    ```
 4. Start a PostgreSQL database (with PostGIS) using Docker:
    ```bash
-   docker-compose up db
+   docker compose up db
    ```
    Or configure your `.env` file to point to an existing PostgreSQL instance
 5. Run the FastAPI server in development mode:

@@ -8,6 +8,30 @@ class Settings(BaseSettings):
     
     # Database settings
     DATABASE_URL: Optional[PostgresDsn] = None
+    POSTGIS_SRID: int = 4326  # WGS84 coordinate system (standard for GPS)
+    
+    # PostGIS specific settings
+    POSTGIS_HOST: Optional[str] = os.getenv("POSTGIS_HOST", "localhost")
+    POSTGIS_PORT: Optional[int] = int(os.getenv("POSTGIS_PORT", "5432"))
+    POSTGIS_USER: Optional[str] = os.getenv("POSTGIS_USER", "postgres")
+    POSTGIS_PASSWORD: Optional[str] = os.getenv("POSTGIS_PASSWORD", "postgres")
+    POSTGIS_DB: Optional[str] = os.getenv("POSTGIS_DB", "geofhir")
+    
+    @field_validator("DATABASE_URL", mode="before")
+    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+        if isinstance(v, str):
+            return v
+        
+        # If DATABASE_URL is not set, build it from individual components
+        user = values.get("POSTGIS_USER")
+        password = values.get("POSTGIS_PASSWORD")
+        host = values.get("POSTGIS_HOST")
+        port = values.get("POSTGIS_PORT")
+        db = values.get("POSTGIS_DB")
+        
+        if all([user, password, host, port, db]):
+            return f"postgresql://{user}:{password}@{host}:{port}/{db}"
+        return v
     
     # FHIR settings
     FHIR_SERVER_URL: Optional[str] = None

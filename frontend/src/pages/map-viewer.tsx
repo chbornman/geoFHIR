@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import TopBar from "../components/common/TopBar";
 import NavTabs from "../components/common/NavTabs";
-import DashboardTab from "../components/dashboard/DashboardTab";
+import MapViewerTab from "../components/maps/MapViewerTab";
 import { FHIRPatient } from "../components/fhir/PatientList";
 import { fetchPatients } from "../services/api";
 import {
@@ -11,11 +11,8 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 
-export default function Home() {
+export default function MapViewerPage() {
   const [patients, setPatients] = useState<FHIRPatient[]>([]);
-  const [selectedPatient, setSelectedPatient] = useState<FHIRPatient | null>(
-    null,
-  );
   const [markers, setMarkers] = useState<
     Array<{ position: { lat: number; lng: number }; title: string }>
   >([]);
@@ -26,9 +23,6 @@ export default function Home() {
     type: "success",
     text: "",
   });
-  // Observations for selected patient
-  const [observations, setObservations] = useState<any[]>([]);
-  const [obsLoading, setObsLoading] = useState(false);
 
   // Show toast notification
   const showNotification = (type: "success" | "error", text: string) => {
@@ -77,146 +71,108 @@ export default function Home() {
     return `${prefix} ${given} ${family}`.trim();
   };
 
-  // Upload panel open/closed state
-  const [uploadOpen, setUploadOpen] = useState<boolean>(true);
-  // Load sample patients
-  const loadSampleData = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // For demonstration, we'll manually load the patients from the sample data
-      const response = await fetch("/api/sample-patients");
-      const data = await response.json();
-
-      if (data.patients && data.patients.length > 0) {
-        setPatients(data.patients);
-
-        // Create markers for all patients with coordinates
-        const newMarkers = data.patients
-          .map((patient: FHIRPatient) => {
-            const coords = getPatientCoordinates(patient);
-            if (!coords) return null;
-
-            return {
-              position: coords,
-              title: getPatientName(patient),
-            };
-          })
-          .filter(Boolean);
-
-        setMarkers(newMarkers);
-
-        showNotification(
-          "success",
-          `Loaded ${data.patients.length} patients with ${newMarkers.length} mappable locations`,
-        );
-      }
-    } catch (err) {
-      console.error("Error loading sample data:", err);
-      setError("Failed to load sample data. Using fallback data instead.");
-
-      // Fallback to hardcoded patient locations
-      const fallbackMarkers = [
-        { position: { lat: 39.0997, lng: -94.5786 }, title: "Kansas City" },
-        { position: { lat: 37.6872, lng: -97.3301 }, title: "Wichita" },
-        { position: { lat: 39.0558, lng: -95.6894 }, title: "Topeka" },
-        { position: { lat: 38.8402, lng: -97.6114 }, title: "Salina" },
-        { position: { lat: 38.9108, lng: -99.3125 }, title: "Hays" },
-        { position: { lat: 37.0842, lng: -100.8584 }, title: "Liberal" },
-      ];
-
-      setMarkers(fallbackMarkers);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Function to refresh data after successful upload
-  const refreshData = async () => {
-    setLoading(true);
-    try {
-      const patientsData = await fetchPatients();
-      if (patientsData.length > 0) {
-        setPatients(patientsData);
-
-        // Create markers for patients with coordinates
-        const newMarkers = patientsData
-          .map((patient) => {
-            const coords = getPatientCoordinates(patient);
-            if (!coords) return null;
-
-            return {
-              position: coords,
-              title: getPatientName(patient),
-            };
-          })
-          .filter(Boolean);
-
-        setMarkers(newMarkers);
-
-        showNotification(
-          "success",
-          `Loaded ${patientsData.length} patients with ${newMarkers.length} mappable locations`,
-        );
-      }
-    } catch (err) {
-      console.error("Error refreshing data:", err);
-      setError("Failed to refresh data. Please upload a FHIR data file.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Don't automatically load data on mount - let user upload a file first
-
-  // Handle patient selection
-  const handlePatientSelect = (patient: FHIRPatient) => {
-    setSelectedPatient(patient);
-
-    const coords = getPatientCoordinates(patient);
-    if (coords) {
-      // Update map to center on this patient
-      setMarkers((prevMarkers) => {
-        // Keep all markers but highlight the selected one
-        return prevMarkers.map((marker) => {
-          if (
-            marker.position.lat === coords.lat &&
-            marker.position.lng === coords.lng
-          ) {
-            // This is the selected patient's marker
-            return {
-              ...marker,
-              // We could add additional properties here for highlighting
-            };
-          }
-          return marker;
-        });
-      });
-    }
-  };
-  // Fetch observations when a patient is selected
+  // Load data on mount
   useEffect(() => {
-    const loadObservations = async () => {
-      if (selectedPatient) {
-        setObsLoading(true);
-        const obsData = await fetchPatientObservations(selectedPatient.id);
-        setObservations(obsData);
-        setObsLoading(false);
-      } else {
-        setObservations([]);
+    const loadData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const patientsData = await fetchPatients();
+        if (patientsData.length > 0) {
+          setPatients(patientsData);
+
+          // Create markers for patients with coordinates
+          const newMarkers = patientsData
+            .map((patient) => {
+              const coords = getPatientCoordinates(patient);
+              if (!coords) return null;
+
+              return {
+                position: coords,
+                title: getPatientName(patient),
+              };
+            })
+            .filter(Boolean);
+
+          setMarkers(newMarkers);
+
+          showNotification(
+            "success",
+            `Loaded ${patientsData.length} patients with ${newMarkers.length} mappable locations`,
+          );
+        } else {
+          // If no patients, load sample data 
+          const response = await fetch("/api/sample-patients");
+          const data = await response.json();
+
+          if (data.patients && data.patients.length > 0) {
+            setPatients(data.patients);
+
+            // Create markers for all patients with coordinates
+            const newMarkers = data.patients
+              .map((patient: FHIRPatient) => {
+                const coords = getPatientCoordinates(patient);
+                if (!coords) return null;
+
+                return {
+                  position: coords,
+                  title: getPatientName(patient),
+                };
+              })
+              .filter(Boolean);
+
+            setMarkers(newMarkers);
+
+            showNotification(
+              "success",
+              `Loaded ${data.patients.length} sample patients with ${newMarkers.length} mappable locations`,
+            );
+          } else {
+            // Fallback to hardcoded patient locations
+            setError("No patient data available. Using fallback location data.");
+            const fallbackMarkers = [
+              { position: { lat: 39.0997, lng: -94.5786 }, title: "Kansas City" },
+              { position: { lat: 37.6872, lng: -97.3301 }, title: "Wichita" },
+              { position: { lat: 39.0558, lng: -95.6894 }, title: "Topeka" },
+              { position: { lat: 38.8402, lng: -97.6114 }, title: "Salina" },
+              { position: { lat: 38.9108, lng: -99.3125 }, title: "Hays" },
+              { position: { lat: 37.0842, lng: -100.8584 }, title: "Liberal" },
+            ];
+
+            setMarkers(fallbackMarkers);
+          }
+        }
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError("Failed to load patient data. Using fallback location data.");
+
+        // Fallback to hardcoded patient locations
+        const fallbackMarkers = [
+          { position: { lat: 39.0997, lng: -94.5786 }, title: "Kansas City" },
+          { position: { lat: 37.6872, lng: -97.3301 }, title: "Wichita" },
+          { position: { lat: 39.0558, lng: -95.6894 }, title: "Topeka" },
+          { position: { lat: 38.8402, lng: -97.6114 }, title: "Salina" },
+          { position: { lat: 38.9108, lng: -99.3125 }, title: "Hays" },
+          { position: { lat: 37.0842, lng: -100.8584 }, title: "Liberal" },
+        ];
+
+        setMarkers(fallbackMarkers);
+      } finally {
+        setLoading(false);
       }
     };
-    loadObservations();
-  }, [selectedPatient]);
+
+    loadData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Head>
-        <title>GeoFHIR - Healthcare Geographic Analysis</title>
+        <title>GeoFHIR - Map Viewer</title>
         <meta
           name="description"
-          content="Analyze geographic patterns in healthcare data using FHIR standards"
+          content="Visualize patient locations and analyze geographic patterns"
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -268,9 +224,11 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 sm:px-0">
-          <DashboardTab 
-            patientsCount={patients.length}
-            locationsCount={markers.length}
+          <MapViewerTab 
+            patients={patients}
+            markers={markers}
+            loading={loading}
+            error={error}
           />
         </div>
       </main>
